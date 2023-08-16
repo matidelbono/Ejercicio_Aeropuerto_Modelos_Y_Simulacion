@@ -144,7 +144,7 @@ void Rutina_arribo_Migracion(void)  /* Evento Arribo */
 		if (list_size[Agente_Control] == 0) // El agente de control puede revisar el equipaje
 		{
 			list_file(FIRST, Agente_Control)
-				Generar_Partida_Control_equipaje(Agente_Control, true)
+			Generar_Partida_Control_equipaje(Agente_Control, true)
 		}
 		else
 		{
@@ -170,11 +170,48 @@ void Generar_Arribo_Migracion()
 	transfer[Tipo_Evento] = Arribo_Migracion;
 	list_file(INCREASING, LIST_EVENT)
 }
+void Rutina_Partida_Aduana()
+{
+	int AgenteAOcupar = 0
+		// Desocupar el agente que atendió al pasajero
+		int NroAgente = transfer[Agente];
+	list_remove(FIRST, NroAgente)
+		int AgenteQueAtendio = 0;
+
+	// ver si hay trabajo en cola
+	if (list_size[Cola_Aduana] > 0)
+	{
+		list_remove(FIRST, Cola_Aduana);
+		AgenteQueAtendio = transfer[Agente]
+			// Ocupar el agente
+			if (list_size[Agente_1] == 0)
+			{
+				list_file(FIRST, Agente_1);
+				Generar_Partida_Aduana(Agente_1, false);
+			}
+			else
+			{
+				if (list_size[Agente_2]==0)
+				{
+					list_file(FIRST, Agente_2);
+					Generar_Partida_Aduana(Agente_2, false)
+				}
+			}
+	}
+}
+void Generar_Partida_Aduana(int Agente)
+{
+	transfer[Tiempo_Evento] = sim_time + expon(media_servicio_no_revision, Partida_Aduana)
+	transfer[Tipo_Evento] = Partida_Aduana
+	transfer[Agente]=Agente
+	transfer[Cola]=Cola_Aduana
+	list_file(INCREASING, LIST_EVENT)
+}
 
 ///////////////////////
 /* Chequear si el Servidor est  desocupado */
 
-if (list_size[Servidor] == 0)
+
 {
 
 	++clientes_act;
