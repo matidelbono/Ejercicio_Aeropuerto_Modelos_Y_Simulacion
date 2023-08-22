@@ -112,7 +112,7 @@ void inicializar(void)
 	min_numero_aleatorio = 1;
 	max_numero_aleatorio = 10;
 	cod_control = 0;
-	cod_aleatorio = ;
+	cod_aleatorio = uniform(1, 10, int);
 
 	/* Se carga el primer Arribo del primer avion en la Lista de Eventos */
 	Generar_Arribo_Avion();
@@ -151,12 +151,12 @@ void Rutina_Arribo_Aduana(void)  /* Evento Arribo */
 	}
 
 	//Ver si debe ser atendido rapidamente o ir al control de equipaje
-	cod_aleatorio++; 
+	cod_control++; 
 	if (cod_aleatorio == cod_control)
 	{
 		//Debe ir al control de equipaje 
 		cod_control = 0;
-		cod_aleatorio = ;
+		cod_aleatorio = uniform(1,10,int);
 
 		//Ver si puede ser atendido
 		if (list_size[Agente_Control_3] == 0)
