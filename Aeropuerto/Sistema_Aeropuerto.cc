@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h> 
 #include "simlib.c"
@@ -16,8 +15,8 @@
 #define Cola_Control_equipaje   5
 
 // Definición Sampst
-#define Media_Demora_Cola_Aduana
-#define Media_Demora_Cola_Control_Equipaje
+#define Media_Demora_Cola_Aduana 1
+#define Media_Demora_Cola_Control_Equipaje 2
 
 
 /*Definición Posiciones Transfer*/
@@ -29,19 +28,19 @@
 
 
 /* Declaraci¢n de variables  */
-int cod_control, cod_aleatorio, media_interarribos_aduana, media_servicio_no_revision, min_servicio_revision, max_servicio_revision, numero_min_pasajeros, numero_max_pasajeros, media_aviones_por_dia, cantidad_dias; min_numero_aleatorio, max_numero_aleatorio;
+int cod_control, cod_aleatorio, media_interarribos_aduana, media_servicio_no_revision, min_servicio_revision, max_servicio_revision, numero_min_pasajeros, numero_max_pasajeros, media_aviones_por_dia, cantidad_dias, min_numero_aleatorio, max_numero_aleatorio, media_interarribos_avion;
 float porcentaje_pasajeros_revisados;
 int contador_revison, contador_pasajeros;
 
 /* Definición Rutinas */
 int main(); /* Main function. */
-void inicializar(void);
+void inicializa(void);
 void Rutina_Arribo_Avion(void);
 void Generar_Arribo_Avion(void);
 void Rutina_Arribo_Aduana(void);
-void Generar_Arribo_Aduana(void);
+void Generar_Arribo_Aduana(int cantidadPasajeros);
 void Rutina_Partida_Aduana(void);
-void Generar_Partida_Aduana(int Agente, bool Control);
+void Generar_Partida_Aduana(int agente);
 void Rutina_Partida_Control_equipaje(void);
 void Generar_Partida_Control_equipaje(void);
 void Estadisticas();
@@ -53,7 +52,7 @@ int main()
 	init_simlib();
 
 	// Rutina inicializar
-	inicializar();
+	inicializa();
 
 
 	/* Establecer maxatr = M ximo n£mero de Atributos utilizados  */
@@ -64,7 +63,6 @@ int main()
 
 	/* Ejecutar la simulaci¢n. */
 
-	clientes_act = 0;
 
 	while (sim_time <= cantidad_dias * 86400)
 	{
@@ -85,7 +83,7 @@ int main()
 		case Partida_Aduana:
 			Rutina_Partida_Aduana();
 			break;
-		case Partida_Control_equipaje:
+		case Partida_Control_Equipaje:
 			Rutina_Partida_Control_equipaje();
 			break;
 		}
@@ -98,9 +96,10 @@ int main()
 }
 
 /* Inicializar el Sistema */
-void inicializar(void)
+void inicializa(void)
 {
 	// asignar valores  a las variables
+	media_interarribos_avion = 3 * 3600;
 	media_interarribos_aduana = 0.2;
 	media_servicio_no_revision = 0.55;
 	min_servicio_revision = 3;
@@ -112,7 +111,7 @@ void inicializar(void)
 	min_numero_aleatorio = 1;
 	max_numero_aleatorio = 10;
 	cod_control = 0;
-	cod_aleatorio = uniform(1, 10, int);
+	cod_aleatorio = uniform(1, 10, 20);
 
 	/* Se carga el primer Arribo del primer avion en la Lista de Eventos */
 	Generar_Arribo_Avion();
@@ -129,7 +128,7 @@ void Rutina_Arribo_Avion(void) {
 	Generar_Arribo_Avion();
 }
 void Generar_Arribo_Avion(void) {
-	transfer[1] = sim_time + expon(media_interarribos, Arribo_Avion);
+	transfer[1] = sim_time + expon(media_interarribos_avion, Arribo_Avion);
 	transfer[2] = Arribo_Avion;
 	transfer[3] = uniform(numero_min_pasajeros, numero_max_pasajeros, Arribo_Avion);
 
@@ -151,17 +150,17 @@ void Rutina_Arribo_Aduana(void)  /* Evento Arribo */
 	}
 
 	//Ver si debe ser atendido rapidamente o ir al control de equipaje
-	cod_control++; 
+	cod_control++;
 	if (cod_aleatorio == cod_control)
 	{
 		//Debe ir al control de equipaje 
 		cod_control = 0;
-		cod_aleatorio = uniform(1,10,int);
+		cod_aleatorio = uniform(1, 10, 20);
 
 		//Ver si puede ser atendido
 		if (list_size[Agente_Control_3] == 0)
 		{
-			list_file(FIRST, Cola_Control_equipaje);
+			list_file(FIRST, Agente_Control_3);
 
 			//Genero la partida de control equipaje y actualizo demora
 			sampst(0.0, Media_Demora_Cola_Control_Equipaje);
@@ -184,7 +183,7 @@ void Rutina_Arribo_Aduana(void)  /* Evento Arribo */
 
 			//Genero la partida de aduana rapida y actualizo demora
 			sampst(0.0, Media_Demora_Cola_Aduana);
-			Generar_Partida_Aduana(1, cantidadPasajeros);
+			Generar_Partida_Aduana(1);
 		}
 		else if (list_size[Agente_Aduana_2] == 0)
 		{
@@ -193,7 +192,7 @@ void Rutina_Arribo_Aduana(void)  /* Evento Arribo */
 
 			//Genero la partida de aduana rapida
 			sampst(0.0, Media_Demora_Cola_Aduana);
-			Generar_Partida_Aduana(2, cantidadPasajeros);
+			Generar_Partida_Aduana(2);
 		}
 		else
 		{
@@ -226,7 +225,7 @@ void Rutina_Partida_Aduana()
 
 		//Actualizo demora
 		sampst(sim_time - transfer[1], Media_Demora_Cola_Aduana);
-		
+
 		//Ocupar agente
 		list_file(FIRST, NroAgente);
 
@@ -235,15 +234,15 @@ void Rutina_Partida_Aduana()
 		Generar_Partida_Aduana(NroAgente);
 	}
 }
-void Generar_Partida_Aduana(int Agente)
+void Generar_Partida_Aduana(int agente)
 {
 	transfer[1] = sim_time + expon(media_servicio_no_revision, Partida_Aduana);
 	transfer[2] = Partida_Aduana;
-	transfer[3] = Agente;
+	transfer[3] = agente;
 
 	list_file(INCREASING, LIST_EVENT);
 }
-void Rutina_Partida_Control_Equipaje(void) {
+void Rutina_Partida_Control_equipaje(void) {
 
 	//Desocupar al agente
 	list_remove(FIRST, Agente_Control_3);
@@ -261,11 +260,11 @@ void Rutina_Partida_Control_Equipaje(void) {
 		sampst(sim_time - transfer[1], Media_Demora_Cola_Control_Equipaje);
 
 		//Genero la proxima partida de control equipaje
-		Generar_Partida_Control_Equipaje();
+		Generar_Partida_Control_equipaje();
 	}
 }
-void Generar_Partida_Control_Equipaje(void) {
-	
+void Generar_Partida_Control_equipaje(void) {
+
 	//Sumo 1 al contador de pasajeros que fueron al control de equipaje para las estadisticas
 	contador_revison++;
 
@@ -277,7 +276,7 @@ void Generar_Partida_Control_Equipaje(void) {
 
 void Estadisticas() {
 	printf("Comienza reporte... \n\n");
-	
+
 	//Utilizacion de cada agente
 	filest(Agente_Aduana_1);
 	printf("\n Utilizacion Agente de la aduana 1: %f \n ", transfer[1]);
